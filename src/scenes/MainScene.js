@@ -3,6 +3,7 @@ import { InfoPanel } from '../ui/InfoPanel.js';
 import { Unit } from '../entities/Unit.js';
 import { TilemapService } from '../services/tilemapService.js';
 import tileset from '../assets/tileset.png';
+import { FogOfWar } from '../vfx/FogOfWar.js';
 
 export class MainScene extends Phaser.Scene {
     constructor() {
@@ -16,18 +17,26 @@ export class MainScene extends Phaser.Scene {
         this.createTextures();
         this.createUnits();
         this.createUI();
+
+        // Initialize fog of war
+        this.fogOfWar = new FogOfWar(this, this.tilemap, { visionRange: 7 });
+        this.fogOfWar.render();   // places fog sprites over tiles
+
+        // Initial visibility update
+        const playerUnits = this.allUnits.filter(u => u.type === 'player');
+        this.fogOfWar.update(playerUnits, this.allUnits, this.selectedUnit);
     }
 
     preload() {
-    this.load.spritesheet(
-        'tiles',
-        tileset,
-        {
-            frameWidth: 40,
-            frameHeight: 40
-        }
-    );
-}
+        this.load.spritesheet(
+            'tiles',
+            tileset,
+            {
+                frameWidth: 40,
+                frameHeight: 40
+            }
+        );
+    }
 
     createMap() {
         this.tilemap = new TilemapService(this, {
@@ -119,5 +128,13 @@ export class MainScene extends Phaser.Scene {
         this.selectedUnit = unit;
         unit.select();
         this.infoPanel.update(unit);
+        this.updateFogOfWar();
+    }
+
+    updateFogOfWar() {
+        if (this.fogOfWar) {
+            const playerUnits = this.allUnits.filter(u => u.type === 'player');
+            this.fogOfWar.update(playerUnits, this.allUnits, this.selectedUnit);
+        }
     }
 }
